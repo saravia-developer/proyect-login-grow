@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  database.login:
+    image: mysql
+    restart: always
+    container_name: database.login
+    environment:
+      MYSQL_ROOT_PASSWORD: loginup
+      MYSQL_DATABASE: login-test
+      MYSQL_USER: luis.saravia
+      MYSQL_PASSWORD: saravia
+    ports:
+     - "3327:3306"
+    volumes:
+      - ./db_data:/var/lib/mysql
+      - ./backups:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+    networks:
+      - app-login-grow
+
+  backend:
+    depends_on:
+      database.login:
+        condition: service_healthy
+    image: saraviadeveloper/server-login-grow
+    restart: always
+    
+    ports:
+      - "3000:3000"
+    networks:
+      - app-login-grow
+
+  frontend:
+    depends_on:
+      - backend
+    image: saraviadeveloper/login-grow
+    restart: always
+
+    ports:
+      - "5173:80"
+    networks:
+      - app-login-grow
+
+volumes:
+  db_data: 
+
+networks:
+  app-login-grow:
+    name: "app-login-grow"
+    driver: bridge
+    # external: true
